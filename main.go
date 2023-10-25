@@ -47,9 +47,9 @@ func main() {
 		total += res
 	}
 
-	averageLatency := total / int64(numConnections)
+	averageResponseTime := total / int64(numConnections)
 
-	fmt.Printf("Average Latency: %v\n", averageLatency)
+	fmt.Printf("Average Response Time: %v\n", averageResponseTime)
 	fmt.Printf("This took: %s\n", time.Since(startTime))
 
 }
