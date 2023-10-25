@@ -8,14 +8,15 @@ import (
 	"time"
 )
 
-func sendRequest(url string, payload []byte, ch chan<- int64, wg *sync.WaitGroup) {
+func sendRequest(url string, payload []byte, ch chan<- int64, wg *sync.WaitGroup, failedRequests *int) {
 	defer wg.Done()
 
 	reqStartTime := time.Now()
 
 	_, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Request failed:", err)
+		fmt.Println("Request Failed: ", err)
+		*failedRequests++
 		return
 	}
 
@@ -24,6 +25,7 @@ func sendRequest(url string, payload []byte, ch chan<- int64, wg *sync.WaitGroup
 
 func main() {
 	numConnections := 10
+	failedRequests := 0
 
 	ch := make(chan int64)
 	var wg sync.WaitGroup
@@ -32,7 +34,7 @@ func main() {
 		payload := []byte(fmt.Sprintf(`{"WG Number": %s}`, strconv.Itoa(i)))
 
 		wg.Add(1)
-		go sendRequest("http://localhost:3000", payload, ch, &wg)
+		go sendRequest("http://localhost:3000", payload, ch, &wg, &failedRequests)
 	}
 
 	go func() {
@@ -49,4 +51,5 @@ func main() {
 	averageResponseTime := total / int64(numConnections)
 
 	fmt.Printf("Average Response Time: %v\n", averageResponseTime)
+	fmt.Printf("Failed Requests: %v\n", failedRequests)
 }
