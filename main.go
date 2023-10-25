@@ -23,7 +23,6 @@ func sendRequest(url string, payload []byte, ch chan<- int64, wg *sync.WaitGroup
 }
 
 func main() {
-	startTime := time.Now()
 	numConnections := 10
 
 	ch := make(chan int64)
@@ -50,6 +49,4 @@ func main() {
 	averageResponseTime := total / int64(numConnections)
 
 	fmt.Printf("Average Response Time: %v\n", averageResponseTime)
-	fmt.Printf("This took: %s\n", time.Since(startTime))
-
 }
