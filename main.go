@@ -2,36 +2,38 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
 )
 
-func sendRequest(url string, payload []byte, ch chan<- string, wg *sync.WaitGroup) {
+func sendRequest(url string, payload []byte, ch chan<- int64, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
-	// if err != nil {
-	//     fmt.Println("Request failed:", err)
-	// } else {
-	//     fmt.Println("Response:", resp.Status)
-	// }
-	time.Sleep(time.Millisecond * 100)
-	ch <- string(payload)
+	reqStartTime := time.Now()
+
+	_, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Request failed:", err)
+		return
+	}
+
+	ch <- time.Since((reqStartTime)).Milliseconds()
 }
 
 func main() {
 	startTime := time.Now()
 	numConnections := 10
 
-	ch := make(chan string)
+	ch := make(chan int64)
 	var wg sync.WaitGroup
 
 	for i := 0; i < numConnections; i++ {
 		payload := []byte(fmt.Sprintf(`{"WG Number": %s}`, strconv.Itoa(i)))
 
 		wg.Add(1)
-		go sendRequest("", payload, ch, &wg)
+		go sendRequest("http://localhost:3000", payload, ch, &wg)
 	}
 
 	go func() {
@@ -39,13 +41,15 @@ func main() {
 		close(ch)
 	}()
 
-	var results []string
+	var total int64 = 0
 
 	for res := range ch {
-		results = append(results, res)
+		total += res
 	}
 
-	fmt.Printf("Items received: %v\n", len(results))
+	averageLatency := total / int64(numConnections)
+
+	fmt.Printf("Average Latency: %v\n", averageLatency)
 	fmt.Printf("This took: %s\n", time.Since(startTime))
 
 }
