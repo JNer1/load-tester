@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -54,13 +55,26 @@ func main() {
 	}()
 
 	var total int64 = 0
+	var responseTimes []int
 
 	for res := range ch {
 		total += res
+		responseTimes = append(responseTimes, int(res))
 	}
+
+	sort.Ints(responseTimes)
+	numberOfResponses := len(responseTimes)
+
+	index99 := int(0.99 * float64(numberOfResponses-1))
+	index95 := int(0.95 * float64(numberOfResponses-1))
+
+	p99 := responseTimes[index99]
+	p95 := responseTimes[index95]
 
 	averageResponseTime := total / int64(*numConnections)
 
 	fmt.Printf("Average Response Time: %v\n", averageResponseTime)
+	fmt.Printf("99: %v\n", p99)
+	fmt.Printf("95: %v\n", p95)
 	fmt.Printf("Failed Requests: %v\n", failedRequests)
 }
